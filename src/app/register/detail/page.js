@@ -1,5 +1,5 @@
 "use client"
-import react, { useState,useReducer } from "react";
+import react, { useState,useReducer,useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { AiOutlinePhone } from "react-icons/ai";
 import ImageComponent from "@/components/ImageComponent";
@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {action} from '@/app/redux/features/user-slice'
 import { callRegister } from "@/app/redux/features/auth-slice";
 import { unwrapResult } from "@reduxjs/toolkit";
+import { Toast } from "@/components/Toast";
 const initialState = {
     isLoading: true,
     user: {
@@ -38,7 +39,19 @@ export default function page() {
     const user = useSelector(state => state.userSlice.user)
     const reduxDispatch = useDispatch()
     const router = useRouter();
-
+    const [errorMessages, setErrorMessages] = useState([]);
+    useEffect(() => {
+        if (errorMessages.length > 0) {
+          const timer = setTimeout(() => {
+            setErrorMessages([]); // Clear all error messages
+          }, 5000); // hide the toast after 5 seconds
+    
+          return () => {
+            clearTimeout(timer); // this will clear the timeout if the component is unmounted before the time is up
+          }
+        }
+      }, [errorMessages]);
+    
     const handleChangePicture = (e) => {
         console.log(e.target.files);
 
@@ -61,16 +74,23 @@ export default function page() {
 
     const handleSubmit = (e) => {
         reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
-        reduxDispatch(callRegister(user)).then(unwrapResult).then(obj => {
-            console.log({obj})
+        reduxDispatch(callRegister(user))
+        .then(unwrapResult)
+        .then(obj => {
+            console.log({obj});
+            setToastMessages([{ isError: false, message: "Details submitted successfully" }]);
             router.push('/register/success');
-        }).catch(err => {
-            console.log(err.toString())
         })
-        
-    }
+        .catch(err => {
+            console.log(err.toString());
+            setToastMessages([{ isError: true, message: "Error in submitting details. Please try again" }]);
+        })
+    };
     return (
         <div className="weak-green-background">
+            <Toast messages={errorMessages} onClose={(index) => {
+        setErrorMessages(errorMessages.filter((_, i) => i !== index));
+      }} />
             <form  className="card">
             <div className="flex gap-2">
                     <ImageComponent key={state.user.picture} src={state.user.picture} />

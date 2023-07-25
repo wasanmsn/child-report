@@ -1,9 +1,10 @@
 "use client"
-import react, { useState, useReducer } from "react";
+import react, { useState, useReducer, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useRouter } from 'next/navigation';
 import Validator from "@/components/validator";
 import { action } from '@/app/redux/features/user-slice'
+import { Toast  } from "@/components/Toast";
 const initialState = {
     user: {
         email: '', password: '', password2: '', name: ''
@@ -25,7 +26,19 @@ const reducer = (state, action) => {
 export default function page() {
     const router = useRouter();
     const [state, dispatch] = useReducer(reducer, initialState);
+    const [errorMessages, setErrorMessages] = useState([]);
     const reduxDispatch = useDispatch()
+    useEffect(() => {
+        if (errorMessages.length > 0) {
+          const timer = setTimeout(() => {
+            setErrorMessages([]); // Clear all error messages
+          }, 5000); // hide the toast after 5 seconds
+    
+          return () => {
+            clearTimeout(timer); // this will clear the timeout if the component is unmounted before the time is up
+          }
+        }
+      }, [errorMessages]);
     const handleChangeConfirmPassword = (e) => {
         const password = e.target.value
         dispatch({ type: 'UPDATE_FIELD', field: e.target.name, payload: password });
@@ -41,13 +54,40 @@ export default function page() {
     };
 
     const handleSubmit = (e) => {
-        if (state.valid.password === 'Password does match.') {
-            reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
-            router.push('/register/detail')
-        };
+        e.preventDefault();
+        if (!state.user.name || !state.user.email || !state.user.password || !state.user.password2) {
+            setErrorMessages([{ isError: true, message: 'Please fill in all fields.' }]);
+            return;
+        }
+        if (state.valid.password !== 'Password does match.') {
+            setErrorMessages([{ isError: true, message: 'Password does not match.' }]);
+            return;
+        }
+        
+        reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
+        .then(response => {
+            // Display a success message
+            setErrorMessages([{ isError: false, message: 'Register successful.' }]);
+    
+            // Wait for 3 seconds then redirect
+            const timer = setTimeout(() => {
+                router.push('/register/detail')
+            }, 3000);
+    
+            // Clear the timer when the component is unmounted
+            return () => clearTimeout(timer);
+        })
+        .catch(error => {
+            // The API call failed. Show a toast with the error message
+            setErrorMessages([{ isError: true, message: error.message }]);
+        });
     }
+    
     return (
         <div className="weak-green-background">
+            <Toast messages={errorMessages} onClose={(index) => {
+        setErrorMessages(errorMessages.filter((_, i) => i !== index));
+      }} />
             <form  className="card">
                 <label className="input-label">
                     <span className="span-child-detail">ชื่อ</span>

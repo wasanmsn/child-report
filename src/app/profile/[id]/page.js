@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import ImageComponent from "@/components/ImageComponent";
 import { AiOutlinePhone } from "react-icons/ai";
 import childDetail from "@/app/api/childDetail";
+import { Toast } from '@/components/Toast'
+
 const initialState = {
     isLoading: true,
     user: {
@@ -36,13 +38,24 @@ export default function page({ params }) {
     const [isEdit, setEdit] = useState(false)
     const { id } = params
     const router = useRouter();
-    useEffect(()=>{
+    const [errorMessages, setErrorMessages] = useState([]);
+    useEffect(() => {
         childDetail(id).then(res => {
-            dispatch({type:'FETCH_SUCCESS',payload:res})
+            dispatch({ type: 'FETCH_SUCCESS', payload: res })
         }).catch(err => {
-            dispatch({type:'FETCH_ERROR'})
+            dispatch({ type: 'FETCH_ERROR' })
         })
-    },[])
+        // Your previous first useEffect functionality
+        if (errorMessages.length > 0) {
+            const timer = setTimeout(() => {
+                setErrorMessages([]); // Clear all error messages
+            }, 5000); // hide the toast after 5 seconds
+
+            return () => {
+                clearTimeout(timer); // this will clear the timeout if the component is unmounted before the time is up
+            };
+        }
+    }, [errorMessages]); // Add errorMessages to the dependency array
 
     const handleCancel = () => {
         dispatch({ type: 'RESET', payload: initialState.user });
@@ -77,15 +90,31 @@ export default function page({ params }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Here, you'd typically send this data to your server or an auth API
-        // console.log({ email, password });
 
-        // You might want to move this line into a `.then()` block if you're calling an API.
-        router.push('/register/success');
+        // validate the input fields
+        if (!state.user.name || !state.user.nickName || !state.user.age || !state.user.father || !state.user.fatherPhone || !state.user.mother || !state.user.motherPhone) {
+            setShowErrorToast(true);
+            setTimeout(() => setShowErrorToast(false), 5000);
+            return;
+        }
+
+        // Here, you'd typically send this data to your server or an auth API
+        updateUserDetail(state.user).then(() => {
+            setShowSuccessToast(true);
+            setTimeout(() => {
+                setErrorMessages([]); // Clear all error messages
+            }, 5000);
+            setEdit(false);
+        }).catch((error) => {
+            // handle error
+            console.log(error);
+            setErrorMessages([{ isError: true, message: error.toString() }]);
+        });
     }
+
     return (
         <div className="weak-green-background">
-
+            {errorMessages.length > 0 && <Toast messages={errorMessages} />}
             <form onSubmit={handleSubmit} className="card">
                 <div className="flex gap-2">
                     <ImageComponent key={state.user.picture} src={state.user.picture} />
@@ -134,6 +163,7 @@ export default function page({ params }) {
                 {isEdit ? <button className="danger-button" type="button" onClick={editToggle}  >ยกเลิก</button> : <button className="primary-button" type="button" onClick={editToggle}  >แก้ไข</button>}
                 {isEdit ? <button className="primary-button" type="submit"  >บันทึก</button> : null}
             </form>
+
         </div>
     )
 }
