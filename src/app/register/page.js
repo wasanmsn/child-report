@@ -1,0 +1,77 @@
+"use client"
+import react, { useState, useReducer } from "react";
+import { useDispatch } from "react-redux";
+import { useRouter } from 'next/navigation';
+import Validator from "@/components/validator";
+import { action } from '@/app/redux/features/user-slice'
+const initialState = {
+    user: {
+        email: '', password: '', password2: '', name: ''
+    },
+    valid: {
+        password: '',
+    }
+};
+const reducer = (state, action) => {
+    switch (action.type) {
+        case 'UPDATE_FIELD':
+            return { ...state, user: { ...state.user, [action.field]: action.payload } };
+        case 'INVALID':
+            return { ...state, valid: { ...state.valid, [action.field]: action.payload } };
+        default:
+            return state;
+    }
+};
+export default function page() {
+    const router = useRouter();
+    const [state, dispatch] = useReducer(reducer, initialState);
+    const reduxDispatch = useDispatch()
+    const handleChangeConfirmPassword = (e) => {
+        const password = e.target.value
+        dispatch({ type: 'UPDATE_FIELD', field: e.target.name, payload: password });
+        //TODO check password here
+        if (password === state.user.password) {
+            dispatch({ type: 'INVALID', field: 'password', payload: 'Password does match.' })
+        } else {
+            dispatch({ type: 'INVALID', field: 'password', payload: 'Password does not match.' })
+        }
+    }
+    const handleChange = (e) => {
+        dispatch({ type: 'UPDATE_FIELD', field: e.target.name, payload: e.target.value });
+    };
+
+    const handleSubmit = (e) => {
+        if (state.valid.password === 'Password does match.') {
+            reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
+            router.push('/register/detail')
+        };
+    }
+    return (
+        <div className="weak-green-background">
+            <form  className="card">
+                <label className="input-label">
+                    <span className="span-child-detail">ชื่อ</span>
+                    <input type="text" name="name" onChange={handleChange} placeholder="ชื่อ" required />
+                </label>
+                <label className="input-label">
+                    <span className="span-child-detail">Email</span>
+
+                    <input type="text" name="email" onChange={handleChange} placeholder="Email" required />
+                </label>
+                <label className="input-label">
+                    <span className="span-child-detail">Password</span>
+
+                    <input type="password" name="password" onChange={handleChangeConfirmPassword} placeholder="Password" required />
+                </label>
+                <label className="input-label">
+                    <span className="span-child-detail">ConfirmPassword</span>
+
+                    <input type="password" name="password2" onChange={handleChangeConfirmPassword} placeholder="Confirm Password" required />
+                    <Validator validation={{ valid: state.valid.password === 'Password does match.', message: state.valid.password }} />
+                </label>
+
+                <button className="primary-button" onClick={handleSubmit} type="button" >ถัดไป</button>
+            </form>
+        </div>
+    )
+}

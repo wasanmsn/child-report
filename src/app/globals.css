@@ -3,25 +3,160 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  
+  --foreground-rgb: #b0eca5;
+  --primary-color: #4caf50;
+  --secondary-color:#76b7dc;
+  --weak-blue-color:#BBD8E7;
+  --warning-color:#FFD748;
+  --danger-color:rgb(248, 69, 69);
+  --component-width:50%;
+
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+@layer components{
+  .child-title{
+    font-size: xx-large;
+    letter-spacing: 1.5px;
+  }
+  .card {
+    border-radius: 5px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+  .login-title{
+    padding: 0 15px;
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    background-color: var(--primary-color);
+    width: 100%;
+    text-align: center;
+    font-size: xx-large;
+    font-weight: bold;
+    height: 100px;
+    line-height: 100px;
+  }
+  .weak-green-background{
+    display: flex;
+    flex-direction: column;
+    background-color: #b0eca5;
+    gap: 20px;
+    height: 100%;
+  }
+  .upload {
+    display: inline-block;
+    padding: 10px 15px;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
   }
 }
 
+html,body{
+  height: 100%;
+}
+
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: white;
+  background-color: var(--foreground-rgb);
+}
+.nav-icon {
+  height: 6em;
+  transform: translateX(2%);
+  transform: translateY(2%);
+
+}
+.child-detail {
+  display: flex;
+  flex-direction: column;
+  width: 100% !important;
+  row-gap: 0.5rem;
+}
+.child-detail label{
+  width: 100% !important;
+}
+.primary-button{
+  width: var(--component-width);
+  padding: 5px;
+  background-color: var(--primary-color);
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+.secondary-button{
+  width: var(--component-width);
+  padding: 5px;
+  background-color: var(--secondary-color);
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+.danger-button{
+  width: var(--component-width);
+  padding: 5px;
+  background-color: var(--danger-color);
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+.primary-button:hover{
+  background-color: #40d126;
+}
+.secondary-button:hover{
+  background-color: #5d9fc5;
+}
+.danger-button:hover{
+  background-color: rgb(255, 0, 0);
+}
+.card label, .card div{
+  text-align: center;
+  width: var(--component-width);
+  
+}
+.input-label input {
+  padding: 5px;
+  width: 100%;
+  color: black;
+}
+.input-label {
+  display: flex;
+  background-color: #ebfae8;
+}
+.span-child-detail {
+  color: #40d126;
+  padding: 5px;
+  border: #4caf50 1px solid;
+  flex: 1 0 80px;
+  display: flex;
+}
+.span-parent-detail{
+  color: #40d126;
+  padding: 5px;
+  border: #4caf50 1px solid;
+  flex: 1 0 150px;
+  display: flex;
+}
+.upload:hover{
+  background-color: #61e058;
+}
+.upload input {
+  display: none;
+  
+}
+.login-title a {
+  font-size: medium;
+}
+.title{
+  font-size: 72px;
+}
+
+@media only screen and (max-width: 800px) {
+  :root{
+    --component-width:100%;
+  }
+  .login-title{
+    font-size: large;
+  }
 }
