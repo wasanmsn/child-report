@@ -5,12 +5,14 @@ import ImageComponent from "@/components/ImageComponent";
 import { AiOutlinePhone } from "react-icons/ai";
 import childDetail from "@/app/api/childDetail";
 import { Toast } from '@/components/Toast'
-
+import LoadingModal from '@/components/Loading';
 import { useDispatch, useSelector } from "react-redux";
 import { action } from '@/app/redux/features/user-slice'
 import update from "@/app/api/update";
 const reducer = (state, action) => {
     switch (action.type) {
+        case 'FETCH_INIT':
+            return { ...state, isLoading: true };
         case 'FETCH_SUCCESS':
             return { isLoading: false, user: action.payload };
         case 'FETCH_ERROR':
@@ -34,6 +36,7 @@ export default function page({ params }) {
     const [errorMessages, setErrorMessages] = useState([]);
     const reduxDispatch = useDispatch()
     useEffect(() => {
+        dispatch({ type: 'FETCH_INIT' });
         childDetail(id).then(res => {
             const picture = res.picture
             console.log(picture)
@@ -100,7 +103,9 @@ export default function page({ params }) {
         }
 
         // Here, you'd typically send this data to your server or an auth API
-        update({ ...user.user, ...state.user }).then(res => {
+        dispatch({ type: 'FETCH_INIT' });
+  update({ ...user.user, ...state.user })
+    .then(res => {
             const picture = res.picture
             const base64 = new Buffer.from(picture.data).toString('base64')
             const pictureSrc = `data:${picture.contentType};base64,${base64}`
@@ -123,7 +128,8 @@ export default function page({ params }) {
 
     return (
         <div className="weak-green-background">
-            {errorMessages.length > 0 && <Toast messages={errorMessages} />}            
+            {errorMessages.length > 0 && <Toast messages={errorMessages} />}
+            {state.isLoading && <LoadingModal />}            
             <form className="card">
                 <div className="flex gap-2">
                     <ImageComponent key={state.user.picture} src={state.user.picture} />

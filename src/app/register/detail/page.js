@@ -8,6 +8,7 @@ import {action} from '@/app/redux/features/user-slice'
 import { callRegister } from "@/app/redux/features/auth-slice";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { Toast } from "@/components/Toast";
+import LoadingModal from '@/components/Loading';
 const initialState = {
     isLoading: true,
     user: {
@@ -37,7 +38,7 @@ const reducer = (state, action) => {
 export default function page() {
     const user = useSelector(state => state.userSlice.user)
     const [state, dispatch] = useReducer(reducer, initialState);
-
+    const [isLoading, setIsLoading] = useState(false);
     const regisProgress = useSelector(state => state.userSlice.progress)
     const reduxDispatch = useDispatch()
     const router = useRouter();
@@ -73,16 +74,19 @@ export default function page() {
 
     const handleSubmit = (e) => {
         reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
+        setIsLoading(true); // <-- Start loading here
         reduxDispatch(callRegister({...user,...state.user}))
         .then(unwrapResult)
         .then(obj => {
             reduxDispatch(action({ type: 'COMPLETE', payload: true , field:'page2'}));
-            setToastMessages([{ isError: false, message: "Details submitted successfully" }]);
+            setErrorMessages([{ isError: false, message: "Details submitted successfully" }]);
             router.push('/register/success');
+            setIsLoading(false); // <-- End loading here
         })
         .catch(err => {
             console.log(err.toString());
-            setToastMessages([{ isError: true, message: "Error in submitting details. Please try again" }]);
+            setErrorMessages([{ isError: true, message: "Error in submitting details. Please try again" }]);
+            setIsLoading(false); // <-- End loading here
         })
         
     }
@@ -91,6 +95,7 @@ export default function page() {
     },[])
     return (
         <div className="weak-green-background">
+            {isLoading && <LoadingModal />}
             <Toast messages={errorMessages} onClose={(index) => {
         setErrorMessages(errorMessages.filter((_, i) => i !== index));
       }} />

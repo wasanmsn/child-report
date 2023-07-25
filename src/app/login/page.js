@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { callLogins } from "@/app/redux/features/auth-slice";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { Toast } from '@/components/Toast'
+import LoadingModal from '@/components/Loading';
 
 export default function page() {
   const [email, setEmail] = useState('');
@@ -14,6 +15,8 @@ export default function page() {
   const router = useRouter();
   const [errorMessages, setErrorMessages] = useState([]);
   const dispatch = useDispatch()
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     if (errorMessages.length > 0) {
       const timer = setTimeout(() => {
@@ -37,40 +40,40 @@ export default function page() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      // Show login fail toast and return early
       setErrorMessages([{ isError: true, message: 'Please fill in all fields.' }]);
       return;
     }
-    // Here, you'd typically send this data to your server or an auth API
+    setLoading(true); // start loading before async call
     try {
-      dispatch(callLogins({ email: email, password: password })).then(unwrapResult).then(obj => {
-        console.log(obj)
-        setErrorMessages([{ isError: false, message: 'Login successful.' }]); // Show a success message
-        const timer = setTimeout(() => { // Set a timer to redirect after the message has shown
-          router.push('/profile/' + obj.childId);
-        }, 3000); // Wait 3 seconds before redirecting
-      }).catch(err => {
-        console.log("Invalid login")
-        setErrorMessages([{ isError: true, message: 'Invalid login.' }]);
-      })
-
-
-
-      // router.push('/user');
-
+      dispatch(callLogins({ email: email, password: password }))
+        .then(unwrapResult)
+        .then(obj => {
+          console.log(obj)
+          setLoading(false); // stop loading after async call
+          setErrorMessages([{ isError: false, message: 'Login successful.' }]);
+          const timer = setTimeout(() => {
+            router.push('/profile/' + obj.childId);
+          }, 3000);
+        })
+        .catch(err => {
+          console.log("Invalid login")
+          setLoading(false); // stop loading if there was an error
+          setErrorMessages([{ isError: true, message: 'Invalid login.' }]);
+        })
     } catch (error) {
       console.log("Err" + error.toString())
+      setLoading(false); // stop loading if there was an error
       setErrorMessages([{ isError: true, message: error.toString() }]);
     }
-
-    // You might want to move this line into a `.then()` block if you're calling an API.
   }
+  
 
   return (
     <div className="weak-green-background">
       <Toast messages={errorMessages} onClose={(index) => {
         setErrorMessages(errorMessages.filter((_, i) => i !== index));
       }} />
+      {loading && <LoadingModal />}
 
       <form className="card">
         <label className="input-label">

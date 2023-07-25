@@ -6,6 +6,7 @@ import Validator from "@/components/validator";
 import { action } from '@/app/redux/features/user-slice'
 import { Toast  } from "@/components/Toast";
 import isEmailValid from "../api/isEmailValid";
+import LoadingModal from '@/components/Loading';
 const reducer = (state, action) => {
     switch (action.type) {
         case 'UPDATE_FIELD':
@@ -22,6 +23,7 @@ export default function page() {
     const [state, dispatch] = useReducer(reducer, user);
     const [errorMessages, setErrorMessages] = useState([]);
     const reduxDispatch = useDispatch()
+    const [isLoading, setIsLoading] = useState(false);
     useEffect(() => {
         if (errorMessages.length > 0) {
           const timer = setTimeout(() => {
@@ -49,6 +51,7 @@ export default function page() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        setIsLoading(true);
         if (!state.user.name || !state.user.email || !state.user.password || !state.user.password2) {
             setErrorMessages([{ isError: true, message: 'Please fill in all fields.' }]);
             return;
@@ -61,7 +64,9 @@ export default function page() {
         reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
         .then(response => {
             // Display a success message
+            setIsLoading(false);
             setErrorMessages([{ isError: false, message: 'Register successful.' }]);
+            
     
             // Wait for 3 seconds then redirect
             const timer = setTimeout(() => {
@@ -73,7 +78,9 @@ export default function page() {
         })
         .catch(error => {
             // The API call failed. Show a toast with the error message
+            setIsLoading(false);
             setErrorMessages([{ isError: true, message: error.message }]);
+            
         });
         if (state.valid.password === 'Password does match.') {
             isEmailValid(state.user.email).then(res => {
@@ -83,12 +90,14 @@ export default function page() {
                     return router.push('/register/detail')
                 }
                 //display error message here "This email is already used"
+                setIsLoading(false);
                 console.log("Email already used")
             })
         };
     }
     return (
         <div className="weak-green-background">
+            {isLoading && <LoadingModal />}
             <Toast messages={errorMessages} onClose={(index) => {
         setErrorMessages(errorMessages.filter((_, i) => i !== index));
       }} />
