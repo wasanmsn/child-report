@@ -4,19 +4,9 @@ import { useRouter } from 'next/navigation';
 import ImageComponent from "@/components/ImageComponent";
 import { AiOutlinePhone } from "react-icons/ai";
 import childDetail from "@/app/api/childDetail";
-const initialState = {
-    isLoading: true,
-    user: {
-        name: '',
-        nickName: '',
-        age: '',
-        picture: '/User-avatar.svg.png',
-        father: '',
-        fatherPhone: '',
-        mother: '',
-        motherPhone: '',
-    }
-};
+import { useDispatch, useSelector } from "react-redux";
+import { action } from '@/app/redux/features/user-slice'
+import update from "@/app/api/update";
 const reducer = (state, action) => {
     switch (action.type) {
         case 'FETCH_SUCCESS':
@@ -32,20 +22,31 @@ const reducer = (state, action) => {
     }
 };
 export default function page({ params }) {
-    const [state, dispatch] = useReducer(reducer, initialState);
+    const user = useSelector(state => state.userSlice)
+    const auth = useSelector(state => state.authSlice)
+    const [isOwner, setIsOwner] = useState(false)
+    const [state, dispatch] = useReducer(reducer, user);
     const [isEdit, setEdit] = useState(false)
     const { id } = params
     const router = useRouter();
-    useEffect(()=>{
+    const reduxDispatch = useDispatch()
+    useEffect(() => {
         childDetail(id).then(res => {
-            dispatch({type:'FETCH_SUCCESS',payload:res})
+            const picture = res.picture
+            console.log(picture)
+            const base64 = new Buffer.from(picture.data).toString('base64')
+            const pictureSrc = `data:${picture.contentType};base64,${base64}`
+            res = { ...res, picture: pictureSrc }
+            dispatch({ type: 'FETCH_SUCCESS', payload: res })
+            reduxDispatch(action({ type: 'FETCH_SUCCESS', payload: res }))
+            if (auth.value.childId === res.childId) setIsOwner(true)
         }).catch(err => {
-            dispatch({type:'FETCH_ERROR'})
+            dispatch({ type: 'FETCH_ERROR' })
         })
-    },[])
+    }, [])
 
     const handleCancel = () => {
-        dispatch({ type: 'RESET', payload: initialState.user });
+        dispatch({ type: 'RESET', payload: user.user });
     };
 
     const handleChange = (e) => {
@@ -76,32 +77,36 @@ export default function page({ params }) {
 
 
     const handleSubmit = (e) => {
-        e.preventDefault();
-        // Here, you'd typically send this data to your server or an auth API
-        // console.log({ email, password });
+        update({ ...user.user, ...state.user }).then(res => {
+            const picture = res.picture
+            const base64 = new Buffer.from(picture.data).toString('base64')
+            const pictureSrc = `data:${picture.contentType};base64,${base64}`
+            res = { ...res, picture: pictureSrc }
+            reduxDispatch(action({ type: 'UPDATE', payload: res }))
+            setEdit(!isEdit)
+            console.log("Update complete")
 
-        // You might want to move this line into a `.then()` block if you're calling an API.
-        router.push('/register/success');
+
+        }).catch(err => console.log(err))
     }
     return (
         <div className="weak-green-background">
-
-            <form onSubmit={handleSubmit} className="card">
+            <form className="card">
                 <div className="flex gap-2">
                     <ImageComponent key={state.user.picture} src={state.user.picture} />
                     <div className="child-detail">
                         <label className="input-label">
                             <span className="span-child-detail">ชื่อ</span>
-                            <input type="text" name="name" onChange={handleChange} placeholder="ชื่อ" value={state.user.name} disabled={!isEdit} />
+                            <input type="text" name="name" onChange={handleChange} placeholder="ชื่อ" value={state.user.name} disabled={!isEdit} required />
                         </label>
                         <label className="input-label">
                             <span className="span-child-detail">ชื่อเล่น</span>
 
-                            <input type="text" name="nickName" onChange={handleChange} placeholder="ชื่อเล่น" value={state.user.nickName} disabled={!isEdit} />
+                            <input type="text" name="nickName" onChange={handleChange} placeholder="ชื่อเล่น" value={state.user.nickName} disabled={!isEdit} required />
                         </label>
                         <label className="input-label">
                             <span className="span-child-detail">อายุ</span>
-                            <input type="text" name="age" onChange={handleChange} placeholder="อายุ" value={state.user.age} disabled={!isEdit} />
+                            <input type="text" name="age" onChange={handleChange} placeholder="อายุ" value={state.user.age} disabled={!isEdit} required />
                         </label>
                     </div>
 
@@ -110,20 +115,20 @@ export default function page({ params }) {
 
                 <label className="input-label">
                     <span className="span-parent-detail">ชื่อบิดา</span>
-                    <input type="text" name="father" onChange={handleChange} placeholder="ชื่อบิดา" value={state.user.father} disabled={!isEdit} />
+                    <input type="text" name="father" onChange={handleChange} placeholder="ชื่อบิดา" value={state.user.father} disabled={!isEdit} required />
                 </label>
                 <label className="input-label">
                     <span className="span-parent-detail" >เบอร์โทรบิดา <AiOutlinePhone className="hover:cursor-pointer" href={`tel:${state.user.fatherPhone}`} size={20} /></span>
-                    <input type="text" name="fatherPhone" onChange={handleChange} placeholder="เบอร์โทรบิดา" value={state.user.fatherPhone} disabled={!isEdit} />
+                    <input type="text" name="fatherPhone" onChange={handleChange} placeholder="เบอร์โทรบิดา" value={state.user.fatherPhone} disabled={!isEdit} required />
 
                 </label>
                 <label className="input-label">
                     <span className="span-parent-detail" >ชื่อมารดา</span>
-                    <input type="text" name="mother" onChange={handleChange} placeholder="ชื่อมารดา" value={state.user.mother} disabled={!isEdit} />
+                    <input type="text" name="mother" onChange={handleChange} placeholder="ชื่อมารดา" value={state.user.mother} disabled={!isEdit} required />
                 </label>
                 <label className="input-label">
                     <span className="span-parent-detail" >เบอร์โทรมารดา <AiOutlinePhone className="hover:cursor-pointer" href={`tel:${state.user.motherPhone}`} size={20} /></span>
-                    <input type="text" name="motherPhone" onChange={handleChange} placeholder="เบอร์โทรมารดา" value={state.user.motherPhone} disabled={!isEdit} />
+                    <input type="text" name="motherPhone" onChange={handleChange} placeholder="เบอร์โทรมารดา" value={state.user.motherPhone} disabled={!isEdit} required />
                 </label>
                 {
                     isEdit ? (<label className="upload font-bold">
@@ -131,8 +136,12 @@ export default function page({ params }) {
                         <input type="file" name="picture" accept="image/*" onChange={handleChangePicture} />
                     </label>) : null
                 }
-                {isEdit ? <button className="danger-button" type="button" onClick={editToggle}  >ยกเลิก</button> : <button className="primary-button" type="button" onClick={editToggle}  >แก้ไข</button>}
-                {isEdit ? <button className="primary-button" type="submit"  >บันทึก</button> : null}
+                {isOwner ? <div>
+                    {isEdit ? <button className="primary-button" type="button" onClick={handleSubmit}  >บันทึก</button> : null}
+                    {isEdit ? <button className="danger-button" type="button" onClick={editToggle}  >ยกเลิก</button> : <button className="primary-button" type="button" onClick={editToggle}  >แก้ไข</button>}
+
+                </div> : null}
+
             </form>
         </div>
     )

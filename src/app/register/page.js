@@ -1,17 +1,10 @@
 "use client"
 import react, { useState, useReducer } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch,useSelector } from "react-redux";
 import { useRouter } from 'next/navigation';
 import Validator from "@/components/validator";
 import { action } from '@/app/redux/features/user-slice'
-const initialState = {
-    user: {
-        email: '', password: '', password2: '', name: ''
-    },
-    valid: {
-        password: '',
-    }
-};
+import isEmailValid from "../api/isEmailValid";
 const reducer = (state, action) => {
     switch (action.type) {
         case 'UPDATE_FIELD':
@@ -24,7 +17,8 @@ const reducer = (state, action) => {
 };
 export default function page() {
     const router = useRouter();
-    const [state, dispatch] = useReducer(reducer, initialState);
+    const user = useSelector(state => state.userSlice)
+    const [state, dispatch] = useReducer(reducer, user);
     const reduxDispatch = useDispatch()
     const handleChangeConfirmPassword = (e) => {
         const password = e.target.value
@@ -42,8 +36,15 @@ export default function page() {
 
     const handleSubmit = (e) => {
         if (state.valid.password === 'Password does match.') {
-            reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
-            router.push('/register/detail')
+            isEmailValid(state.user.email).then(res => {
+                if(res){
+                    reduxDispatch(action({ type: 'COMPLETE', payload: true , field:'page1'}))
+                    reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
+                    return router.push('/register/detail')
+                }
+                //display error message here "This email is already used"
+                console.log("Email already used")
+            })
         };
     }
     return (

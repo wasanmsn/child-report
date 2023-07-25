@@ -1,5 +1,5 @@
 "use client"
-import react, { useState,useReducer } from "react";
+import react, { useState,useReducer, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { AiOutlinePhone } from "react-icons/ai";
 import ImageComponent from "@/components/ImageComponent";
@@ -34,19 +34,18 @@ const reducer = (state, action) => {
     }
 };
 export default function page() {
-    const [state, dispatch] = useReducer(reducer, initialState);
     const user = useSelector(state => state.userSlice.user)
+    const [state, dispatch] = useReducer(reducer, initialState);
+
+    const regisProgress = useSelector(state => state.userSlice.progress)
     const reduxDispatch = useDispatch()
     const router = useRouter();
 
     const handleChangePicture = (e) => {
-        console.log(e.target.files);
-
         const file = e.target.files[0];
         if (file && file.type.substr(0, 5) === 'image') {
             const reader = new FileReader();
             reader.onloadend = () => {
-                console.log(reader.result);
                 dispatch({ type: 'UPDATE_FIELD', field: 'picture', payload: reader.result });
             };
             reader.readAsDataURL(file);
@@ -61,14 +60,17 @@ export default function page() {
 
     const handleSubmit = (e) => {
         reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
-        reduxDispatch(callRegister(user)).then(unwrapResult).then(obj => {
-            console.log({obj})
+        reduxDispatch(callRegister({...user,...state.user})).then(unwrapResult).then(obj => {
+            reduxDispatch(action({ type: 'COMPLETE', payload: true , field:'page2'}))
             router.push('/register/success');
         }).catch(err => {
             console.log(err.toString())
         })
         
     }
+    useEffect(() => {
+        if(!regisProgress.page1) router.push('/register')
+    },[])
     return (
         <div className="weak-green-background">
             <form  className="card">

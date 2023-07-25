@@ -16,7 +16,15 @@ const initialState = {
             motherPhone: '',
             childId:'',
             password:'',
-            password2:''
+            password2:'',
+            email:''
+        },
+        valid: {
+            password: '',
+        },
+        progress:{
+            page1:false,
+            page2:false
         }
 }
 
@@ -24,14 +32,16 @@ const initialState = {
 const reducer =  (state, action) => {
     switch (action.payload.type) {
         case 'FETCH_SUCCESS':
-            return { isLoading: false, user: action.payload.payload };
+            console.log(action.payload)
+            return { ...state,isLoading: false, user: action.payload.payload };
         case 'FETCH_ERROR':
             return { ...state, isLoading: false };
         case 'UPDATE':
-            console.log(action)
             return {...state,user:{...state.user,...action.payload.payload}}
         case 'RESET':
             return { ...state, user: action.payload.payload };
+        case 'COMPLETE':
+            return {...state,progress:{...state.progress,[action.payload.field]:action.payload.payload}}
         default:
             return state;
     }
