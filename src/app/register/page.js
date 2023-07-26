@@ -49,52 +49,55 @@ export default function page() {
         dispatch({ type: 'UPDATE_FIELD', field: e.target.name, payload: e.target.value });
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        if (!state.user.name || !state.user.email || !state.user.password || !state.user.password2) {
-            setErrorMessages([{ isError: true, message: 'Please fill in all fields.' }]);
-            return;
-        }
-        if (state.valid.password !== 'Password does match.') {
-            setErrorMessages([{ isError: true, message: 'Password does not match.' }]);
-            return;
-        }
-        
+    const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  if (!state.user.name || !state.user.email || !state.user.password || !state.user.password2) {
+    setIsLoading(false);
+    setErrorMessages([{ isError: true, message: 'Please fill in all fields.' }]);
+    return;
+  }
+  if (state.valid.password !== 'Password does match.') {
+    setIsLoading(false);
+    setErrorMessages([{ isError: true, message: 'Password does not match.' }]);
+    return;
+  }
+
+  try {
+    const response = await updateUser(state.user); // Call your API function
+
+    // If the API call is successful, then dispatch the action
+    reduxDispatch(action({ type: 'UPDATE', payload: state.user }));
+
+    setErrorMessages([{ isError: false, message: 'Register successful.' }]);
+    
+    // Wait for 3 seconds then redirect
+    const timer = setTimeout(() => {
+        router.push('/register/detail')
+    }, 3000);
+
+    // Clear the timer when the component is unmounted
+    return () => clearTimeout(timer);
+  } catch (error) {
+    // The API call failed. Show a toast with the error message
+    setIsLoading(false);
+    setErrorMessages([{ isError: true, message: error.message }]);
+  }
+  
+  if (state.valid.password === 'Password does match.') {
+    isEmailValid(state.user.email).then(res => {
+      if(res){
+        reduxDispatch(action({ type: 'COMPLETE', payload: true , field:'page1'}))
         reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
-        .then(response => {
-            // Display a success message
-            setIsLoading(false);
-            setErrorMessages([{ isError: false, message: 'Register successful.' }]);
-            
-    
-            // Wait for 3 seconds then redirect
-            const timer = setTimeout(() => {
-                router.push('/register/detail')
-            }, 3000);
-    
-            // Clear the timer when the component is unmounted
-            return () => clearTimeout(timer);
-        })
-        .catch(error => {
-            // The API call failed. Show a toast with the error message
-            setIsLoading(false);
-            setErrorMessages([{ isError: true, message: error.message }]);
-            
-        });
-        if (state.valid.password === 'Password does match.') {
-            isEmailValid(state.user.email).then(res => {
-                if(res){
-                    reduxDispatch(action({ type: 'COMPLETE', payload: true , field:'page1'}))
-                    reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
-                    return router.push('/register/detail')
-                }
-                //display error message here "This email is already used"
-                setIsLoading(false);
-                console.log("Email already used")
-            })
-        };
-    }
+        return router.push('/register/detail')
+      }
+      //display error message here "This email is already used"
+      setIsLoading(false);
+      console.log("Email already used")
+    })
+  };
+}
+
     return (
         <div className="weak-green-background">
             {isLoading && <LoadingModal />}
