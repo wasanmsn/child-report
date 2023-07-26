@@ -22,10 +22,14 @@ export default function navBar() {
   const auth = useSelector((state) => state.authSlice);
   const page = navLinks.find((links) => pathName.match(links.pathRegex));
   const title = (
-    <p>
-      {page.name} {page.detail ? query.get(page.detail) : ""}
-    </p>
+<div className="flex items-center justify-center">
+  <p className="text-sm text-center">
+    {page.name} {page.detail ? query.get(page.detail) : ""}
+  </p>
+</div>
+
   );
+
   const dispatch = useDispatch();
   useEffect(() =>{
     if(page.name !== 'ลงทะเบียน'){
