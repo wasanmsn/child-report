@@ -79,7 +79,7 @@ export default function Home() {
         <button className="primary-button" type="button" onClick={() => {
           router.push(!auth.isAuth ? '/register' : '/profile/'+auth.childId)
         }}  >{!auth.isAuth ? "สมัครสมาชิก":"โปรไฟล์"}</button>
-        <a className="primary-button text-center" href="https://line.me/R/ti/p/"   >ติดต่อสอบถาม</a>
+        <a className="primary-button text-center" href={process.env.NEXT_PUBLIC_LINE_ADDRESS}   >ติดต่อสอบถาม</a>
 
 
       </form>

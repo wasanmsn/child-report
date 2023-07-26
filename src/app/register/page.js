@@ -32,6 +32,7 @@ export default function page() {
   const [errorMessages, setErrorMessages] = useState([]);
   const reduxDispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
+  
   useEffect(() => {
     if (errorMessages.length > 0) {
       const timer = setTimeout(() => {
@@ -96,6 +97,10 @@ export default function page() {
     });
     
   };
+  function validateEmail(email) {
+    const re = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    return re.test(String(email).toLowerCase());
+}
   return (
     <div className="weak-green-background">
       {isLoading && <LoadingModal />}
@@ -128,6 +133,10 @@ export default function page() {
             required
             value={state.user.email}
           />
+          <Validator validation={{
+            valid: validateEmail(state.user.email),
+            message: "Invalid email format"
+          }} />
         </label>
         <label className="input-label">
           <span className="span-child-detail">Password</span>

@@ -1,5 +1,5 @@
 "use client";
-import react, { useState } from "react";
+import react, { useEffect, useState } from "react";
 import { useRouter, usePathname,useSearchParams  } from "next/navigation";
 import { navLinks } from "./nav-links";
 import {
@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { callLoggouts } from "./redux/features/auth-slice";
 import { unwrapResult } from "@reduxjs/toolkit";
 import Link from "next/link";
+import {action} from '@/app/redux/features/user-slice'
 
 export default function navBar() {
   const router = useRouter();
@@ -26,6 +27,11 @@ export default function navBar() {
     </p>
   );
   const dispatch = useDispatch();
+  useEffect(() =>{
+    if(page.name !== 'ลงทะเบียน'){
+      dispatch(action({type:'RESET'}))
+    }
+  },[page])
 
   const back = () => {
     if (page.backUrl === "back") return router.back();
