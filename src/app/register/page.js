@@ -1,10 +1,12 @@
 "use client"
-import react, { useState, useReducer } from "react";
+import react, { useState, useReducer, useEffect } from "react";
 import { useDispatch,useSelector } from "react-redux";
 import { useRouter } from 'next/navigation';
 import Validator from "@/components/validator";
 import { action } from '@/app/redux/features/user-slice'
+import { Toast  } from "@/components/Toast";
 import isEmailValid from "../api/isEmailValid";
+import LoadingModal from '@/components/Loading';
 const reducer = (state, action) => {
     switch (action.type) {
         case 'UPDATE_FIELD':
@@ -19,7 +21,20 @@ export default function page() {
     const router = useRouter();
     const user = useSelector(state => state.userSlice)
     const [state, dispatch] = useReducer(reducer, user);
+    const [errorMessages, setErrorMessages] = useState([]);
     const reduxDispatch = useDispatch()
+    const [isLoading, setIsLoading] = useState(false);
+    useEffect(() => {
+        if (errorMessages.length > 0) {
+          const timer = setTimeout(() => {
+            setErrorMessages([]); // Clear all error messages
+          }, 5000); // hide the toast after 5 seconds
+    
+          return () => {
+            clearTimeout(timer); // this will clear the timeout if the component is unmounted before the time is up
+          }
+        }
+      }, [errorMessages]);
     const handleChangeConfirmPassword = (e) => {
         const password = e.target.value
         dispatch({ type: 'UPDATE_FIELD', field: e.target.name, payload: password });
@@ -35,6 +50,38 @@ export default function page() {
     };
 
     const handleSubmit = (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        if (!state.user.name || !state.user.email || !state.user.password || !state.user.password2) {
+            setErrorMessages([{ isError: true, message: 'Please fill in all fields.' }]);
+            return;
+        }
+        if (state.valid.password !== 'Password does match.') {
+            setErrorMessages([{ isError: true, message: 'Password does not match.' }]);
+            return;
+        }
+        
+        reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
+        .then(response => {
+            // Display a success message
+            setIsLoading(false);
+            setErrorMessages([{ isError: false, message: 'Register successful.' }]);
+            
+    
+            // Wait for 3 seconds then redirect
+            const timer = setTimeout(() => {
+                router.push('/register/detail')
+            }, 3000);
+    
+            // Clear the timer when the component is unmounted
+            return () => clearTimeout(timer);
+        })
+        .catch(error => {
+            // The API call failed. Show a toast with the error message
+            setIsLoading(false);
+            setErrorMessages([{ isError: true, message: error.message }]);
+            
+        });
         if (state.valid.password === 'Password does match.') {
             isEmailValid(state.user.email).then(res => {
                 if(res){
@@ -43,12 +90,17 @@ export default function page() {
                     return router.push('/register/detail')
                 }
                 //display error message here "This email is already used"
+                setIsLoading(false);
                 console.log("Email already used")
             })
         };
     }
     return (
         <div className="weak-green-background">
+            {isLoading && <LoadingModal />}
+            <Toast messages={errorMessages} onClose={(index) => {
+        setErrorMessages(errorMessages.filter((_, i) => i !== index));
+      }} />
             <form  className="card">
                 <label className="input-label">
                     <span className="span-child-detail">ชื่อ</span>

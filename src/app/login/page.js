@@ -1,19 +1,33 @@
 "use client"
-import react, { useState } from "react";
+import react, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import Link from "next/link";
-import { useDispatch,useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { callLogins } from "@/app/redux/features/auth-slice";
 import { unwrapResult } from "@reduxjs/toolkit";
+import { Toast } from '@/components/Toast'
+import LoadingModal from '@/components/Loading';
 
 export default function page() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const auth = useSelector((state) => state.authSlice)
   const router = useRouter();
-
+  const [errorMessages, setErrorMessages] = useState([]);
   const dispatch = useDispatch()
+  const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (errorMessages.length > 0) {
+      const timer = setTimeout(() => {
+        setErrorMessages([]); // Clear all error messages
+      }, 5000); // hide the toast after 5 seconds
+
+      return () => {
+        clearTimeout(timer); // this will clear the timeout if the component is unmounted before the time is up
+      }
+    }
+  }, [errorMessages]);
 
   const handleChangeEmail = (e) => {
     setEmail(e.target.value);
@@ -24,26 +38,43 @@ export default function page() {
   }
 
   const handleSubmit = async (e) => {
-    // Here, you'd typically send this data to your server or an auth API
+    e.preventDefault();
+    if (!email || !password) {
+      setErrorMessages([{ isError: true, message: 'Please fill in all fields.' }]);
+      return;
+    }
+    setLoading(true); // start loading before async call
     try {
-      dispatch(callLogins({ email: email, password: password })).then(unwrapResult).then(obj => {
-        console.log(obj)
-        router.push('/profile/'+obj.childId)
-      }).catch(err => {
-        console.log("Invalid login")
-      })
-      
-      // router.push('/user');
-
+      dispatch(callLogins({ email: email, password: password }))
+        .then(unwrapResult)
+        .then(obj => {
+          console.log(obj)
+          setLoading(false); // stop loading after async call
+          setErrorMessages([{ isError: false, message: 'Login successful.' }]);
+          const timer = setTimeout(() => {
+            router.push('/profile/' + obj.childId);
+          }, 3000);
+        })
+        .catch(err => {
+          console.log("Invalid login")
+          setLoading(false); // stop loading if there was an error
+          setErrorMessages([{ isError: true, message: 'Invalid login.' }]);
+        })
     } catch (error) {
       console.log("Err" + error.toString())
+      setLoading(false); // stop loading if there was an error
+      setErrorMessages([{ isError: true, message: error.toString() }]);
     }
-
-    // You might want to move this line into a `.then()` block if you're calling an API.
   }
+  
 
   return (
     <div className="weak-green-background">
+      <Toast messages={errorMessages} onClose={(index) => {
+        setErrorMessages(errorMessages.filter((_, i) => i !== index));
+      }} />
+      {loading && <LoadingModal />}
+
       <form className="card">
         <label className="input-label">
           <input type="text" name="email" onChange={handleChangeEmail} placeholder="Email" />

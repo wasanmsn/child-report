@@ -1,5 +1,5 @@
 "use client"
-import react, { useState,useReducer, useEffect } from "react";
+import react, { useState,useReducer,useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { AiOutlinePhone } from "react-icons/ai";
 import ImageComponent from "@/components/ImageComponent";
@@ -7,6 +7,8 @@ import { useDispatch, useSelector } from "react-redux";
 import {action} from '@/app/redux/features/user-slice'
 import { callRegister } from "@/app/redux/features/auth-slice";
 import { unwrapResult } from "@reduxjs/toolkit";
+import { Toast } from "@/components/Toast";
+import LoadingModal from '@/components/Loading';
 const initialState = {
     isLoading: true,
     user: {
@@ -36,11 +38,23 @@ const reducer = (state, action) => {
 export default function page() {
     const user = useSelector(state => state.userSlice.user)
     const [state, dispatch] = useReducer(reducer, initialState);
-
+    const [isLoading, setIsLoading] = useState(false);
     const regisProgress = useSelector(state => state.userSlice.progress)
     const reduxDispatch = useDispatch()
     const router = useRouter();
-
+    const [errorMessages, setErrorMessages] = useState([]);
+    useEffect(() => {
+        if (errorMessages.length > 0) {
+          const timer = setTimeout(() => {
+            setErrorMessages([]); // Clear all error messages
+          }, 5000); // hide the toast after 5 seconds
+    
+          return () => {
+            clearTimeout(timer); // this will clear the timeout if the component is unmounted before the time is up
+          }
+        }
+      }, [errorMessages]);
+    
     const handleChangePicture = (e) => {
         const file = e.target.files[0];
         if (file && file.type.substr(0, 5) === 'image') {
@@ -60,11 +74,19 @@ export default function page() {
 
     const handleSubmit = (e) => {
         reduxDispatch(action({ type: 'UPDATE', payload: state.user }))
-        reduxDispatch(callRegister({...user,...state.user})).then(unwrapResult).then(obj => {
-            reduxDispatch(action({ type: 'COMPLETE', payload: true , field:'page2'}))
+        setIsLoading(true); // <-- Start loading here
+        reduxDispatch(callRegister({...user,...state.user}))
+        .then(unwrapResult)
+        .then(obj => {
+            reduxDispatch(action({ type: 'COMPLETE', payload: true , field:'page2'}));
+            setErrorMessages([{ isError: false, message: "Details submitted successfully" }]);
             router.push('/register/success');
-        }).catch(err => {
-            console.log(err.toString())
+            setIsLoading(false); // <-- End loading here
+        })
+        .catch(err => {
+            console.log(err.toString());
+            setErrorMessages([{ isError: true, message: "Error in submitting details. Please try again" }]);
+            setIsLoading(false); // <-- End loading here
         })
         
     }
@@ -73,6 +95,10 @@ export default function page() {
     },[])
     return (
         <div className="weak-green-background">
+            {isLoading && <LoadingModal />}
+            <Toast messages={errorMessages} onClose={(index) => {
+        setErrorMessages(errorMessages.filter((_, i) => i !== index));
+      }} />
             <form  className="card">
             <div className="flex gap-2">
                     <ImageComponent key={state.user.picture} src={state.user.picture} />

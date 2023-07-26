@@ -1,10 +1,12 @@
 "use client"
-import react, { useState } from "react";
+import react, { useState,useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { useDispatch,useSelector } from "react-redux";
 import Validator from "@/components/validator";
+import { Toast } from "@/components/Toast";
 import childDetail from "./api/childDetail";
 import { action } from "./redux/features/user-slice";
+import LoadingModal from '@/components/Loading';
 
 export default function Home() {
   const [childId, setChildId] = useState('');
@@ -12,7 +14,22 @@ export default function Home() {
   const router = useRouter();
   const user = useSelector(state => state.userSlice.user)
   const auth = useSelector(state => state.authSlice.value)
-  const dispatch = useDispatch()
+  const dispatch = useDispatch()  
+  const [errorMessages, setErrorMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (errorMessages.length > 0) {
+      const timer = setTimeout(() => {
+        setErrorMessages([]); // Clear all error messages
+      }, 5000); // hide the toast after 5 seconds
+
+      return () => {
+        clearTimeout(timer); // this will clear the timeout if the component is unmounted before the time is up
+      }
+    }
+  }, [errorMessages]);
+
   const handleChangeChildId = (e) => {
     validating()
     setChildId(e.target.value);
@@ -20,6 +37,7 @@ export default function Home() {
   const validating = () =>{
     if(!childId){
       setValidation({...validation,message:"โปรดใส่เลขประจำตัวเด็ก",valid:false})
+
       return false
     }
     setValidation({valid:true})
@@ -29,20 +47,30 @@ export default function Home() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if(!validating()) return
-    childDetail(childId).then(res => {
-      dispatch(action({ type: 'FETCH_SUCCESS', payload: res }))
-      router.push('/profile/'+childId);
-    }).catch(err => {
-      dispatch(action({type:'FETCH_ERROR'}))
-  })
-
-    // You might want to move this line into a `.then()` block if you're calling an API.
+    if(!childId){
+      setErrorMessages([{ isError: true, message: 'โปรดใส่เลขประจำตัวเด็ก' }]);
+      return;
+    }
+    if(!validating()) return;
+    setLoading(true); // start loading before async call
+    childDetail(childId)
+      .then(res => {
+        dispatch(action({ type: 'FETCH_SUCCESS', payload: res }))
+        router.push('/profile/'+childId);
+        setLoading(false); // stop loading after async call
+      })
+      .catch(err => {
+        dispatch(action({type:'FETCH_ERROR'}))
+        setLoading(false); // stop loading if there was an error
+      });
   }
-  
 
   return (
     <div className="weak-green-background">
+      <Toast messages={errorMessages} onClose={(index) => {
+        setErrorMessages(errorMessages.filter((_, i) => i !== index));
+      }} />
+      {loading && <LoadingModal />}
       <div className="text-center title">
         <h1>"ระบบตามหา"</h1>
         <h1>ผู้ปกครอง</h1>

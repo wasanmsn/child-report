@@ -4,11 +4,15 @@ import { useRouter } from 'next/navigation';
 import ImageComponent from "@/components/ImageComponent";
 import { AiOutlinePhone } from "react-icons/ai";
 import childDetail from "@/app/api/childDetail";
+import { Toast } from '@/components/Toast'
+import LoadingModal from '@/components/Loading';
 import { useDispatch, useSelector } from "react-redux";
 import { action } from '@/app/redux/features/user-slice'
 import update from "@/app/api/update";
 const reducer = (state, action) => {
     switch (action.type) {
+        case 'FETCH_INIT':
+            return { ...state, isLoading: true };
         case 'FETCH_SUCCESS':
             return { isLoading: false, user: action.payload };
         case 'FETCH_ERROR':
@@ -29,8 +33,10 @@ export default function page({ params }) {
     const [isEdit, setEdit] = useState(false)
     const { id } = params
     const router = useRouter();
+    const [errorMessages, setErrorMessages] = useState([]);
     const reduxDispatch = useDispatch()
     useEffect(() => {
+        dispatch({ type: 'FETCH_INIT' });
         childDetail(id).then(res => {
             const picture = res.picture
             console.log(picture)
@@ -43,7 +49,17 @@ export default function page({ params }) {
         }).catch(err => {
             dispatch({ type: 'FETCH_ERROR' })
         })
-    }, [])
+        // Your previous first useEffect functionality
+        if (errorMessages.length > 0) {
+            const timer = setTimeout(() => {
+                setErrorMessages([]); // Clear all error messages
+            }, 5000); // hide the toast after 5 seconds
+
+            return () => {
+                clearTimeout(timer); // this will clear the timeout if the component is unmounted before the time is up
+            };
+        }
+    }, [errorMessages]); // Add errorMessages to the dependency array
 
     const handleCancel = () => {
         dispatch({ type: 'RESET', payload: user.user });
@@ -77,7 +93,19 @@ export default function page({ params }) {
 
 
     const handleSubmit = (e) => {
-        update({ ...user.user, ...state.user }).then(res => {
+        e.preventDefault();
+
+        // validate the input fields
+        if (!state.user.name || !state.user.nickName || !state.user.age || !state.user.father || !state.user.fatherPhone || !state.user.mother || !state.user.motherPhone) {
+            setShowErrorToast(true);
+            setTimeout(() => setShowErrorToast(false), 5000);
+            return;
+        }
+
+        // Here, you'd typically send this data to your server or an auth API
+        dispatch({ type: 'FETCH_INIT' });
+  update({ ...user.user, ...state.user })
+    .then(res => {
             const picture = res.picture
             const base64 = new Buffer.from(picture.data).toString('base64')
             const pictureSrc = `data:${picture.contentType};base64,${base64}`
@@ -87,10 +115,21 @@ export default function page({ params }) {
             console.log("Update complete")
 
 
-        }).catch(err => console.log(err))
+            setTimeout(() => {
+                setErrorMessages([]); // Clear all error messages
+            }, 5000);
+            setEdit(false);
+        }).catch((error) => {
+            // handle error
+            console.log(error);
+            setErrorMessages([{ isError: true, message: error.toString() }]);
+        });
     }
+
     return (
         <div className="weak-green-background">
+            {errorMessages.length > 0 && <Toast messages={errorMessages} />}
+            {state.isLoading && <LoadingModal />}            
             <form className="card">
                 <div className="flex gap-2">
                     <ImageComponent key={state.user.picture} src={state.user.picture} />
@@ -143,6 +182,7 @@ export default function page({ params }) {
                 </div> : null}
 
             </form>
+
         </div>
     )
 }
