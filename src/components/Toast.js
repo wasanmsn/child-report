@@ -20,7 +20,7 @@ export const Toast = ({ messages }) => {
       role="alert"
     >
       <div className="ml-3 text-ml font-medium">{msg.message}</div>
-      <button 
+      <button
         type="button" 
         className={`ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex items-center justify-center h-8 w-8 ${getButtonClasses(msg.isError)}`}
         data-dismiss-target={`#alert-${index}`} 

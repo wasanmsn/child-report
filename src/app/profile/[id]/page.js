@@ -159,7 +159,7 @@ export default function page({ params }) {
                 <label className="input-label">
                     <span className="span-parent-detail" >เบอร์โทรบิดา <AiOutlinePhone className="hover:cursor-pointer" href={`tel:${state.user.fatherPhone}`} size={20} /></span>
                     <input type="text" name="fatherPhone" onChange={handleChange} placeholder="เบอร์โทรบิดา" value={state.user.fatherPhone} disabled={!isEdit} required />
-
+                    <button type="button" style={{margin:0}} class="text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800" href={`tel:${state.user.fatherPhone}`}><AiOutlinePhone className="hover:cursor-pointer" href={`tel:${state.user.fatherPhone}`} size={20} /></button>
                 </label>
                 <label className="input-label">
                     <span className="span-parent-detail" >ชื่อมารดา</span>
@@ -168,6 +168,8 @@ export default function page({ params }) {
                 <label className="input-label">
                     <span className="span-parent-detail" >เบอร์โทรมารดา <AiOutlinePhone className="hover:cursor-pointer" href={`tel:${state.user.motherPhone}`} size={20} /></span>
                     <input type="text" name="motherPhone" onChange={handleChange} placeholder="เบอร์โทรมารดา" value={state.user.motherPhone} disabled={!isEdit} required />
+                    <button type="button" style={{margin:0}} class="text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800" href={`tel:${state.user.motherPhone}`}><AiOutlinePhone className="hover:cursor-pointer" href={`tel:${state.user.motherPhone}`} size={20} /></button>
+
                 </label>
                 {
                     isEdit ? (<label className="upload font-bold">
