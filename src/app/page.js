@@ -1,20 +1,16 @@
 "use client"
 import react, { useState,useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import { useDispatch,useSelector } from "react-redux";
-import Validator from "@/components/validator";
 import { Toast } from "@/components/Toast";
 import childDetail from "./api/childDetail";
-import { action } from "./redux/features/user-slice";
 import LoadingModal from '@/components/Loading';
+import { useSelector } from "react-redux";
 
 export default function Home() {
   const [childId, setChildId] = useState('');
   const [validation,setValidation] = useState({valid:true});
   const router = useRouter();
-  const user = useSelector(state => state.userSlice.user)
   const auth = useSelector(state => state.authSlice.value)
-  const dispatch = useDispatch()  
   const [errorMessages, setErrorMessages] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -46,7 +42,6 @@ export default function Home() {
 
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
     if(!childId){
       setErrorMessages([{ isError: true, message: 'โปรดใส่เลขประจำตัวเด็ก' }]);
       return;
@@ -55,12 +50,10 @@ export default function Home() {
     setLoading(true); // start loading before async call
     childDetail(childId)
       .then(res => {
-        dispatch(action({ type: 'FETCH_SUCCESS', payload: res }))
-        router.push('/profile/'+childId);
         setLoading(false); // stop loading after async call
+        router.push('/profile/'+childId+"?nickName="+res.nickName);
       })
       .catch(err => {
-        dispatch(action({type:'FETCH_ERROR'}))
         setLoading(false); // stop loading if there was an error
       });
   }
@@ -75,19 +68,18 @@ export default function Home() {
         <h1>"ระบบตามหา"</h1>
         <h1>ผู้ปกครอง</h1>
       </div>
-      <form onSubmit={handleSubmit} className="card">
+      <form className="card">
         <label className="font-bold child-title">
           Children ID
         </label>
         <label className="input-label">
           <input autoFocus type="text" name="childId" onChange={handleChangeChildId} placeholder="กรุณากรอกเลขประจำตัว" />
-          <Validator validation={validation} />
         </label>
-        <button className="primary-button" type="submit"  >ตรวจสอบ</button>
+        <button className="primary-button" type="button" onClick={handleSubmit}  >ตรวจสอบ</button>
         <button className="primary-button" type="button" onClick={() => {
-          router.push(!auth.isAuth ? '/register' : '/profile/'+user.childId)
+          router.push(!auth.isAuth ? '/register' : '/profile/'+auth.childId)
         }}  >{!auth.isAuth ? "สมัครสมาชิก":"โปรไฟล์"}</button>
-        <a className="primary-button text-center" href="https://line.me/R/ti/p/"   >ติดต่อสอบถาม</a>
+        <a className="primary-button text-center" href={process.env.NEXT_PUBLIC_LINE_ADDRESS}   >ติดต่อสอบถาม</a>
 
 
       </form>

@@ -9,7 +9,8 @@ const initialState = {
     value: {
         isAuth: false,
         email: '',
-        childId: ''
+        childId: '',
+        nickName:''
     },
     error:{
         message:'',
@@ -53,7 +54,7 @@ export const auth = createSlice({
                 value: {
                     isAuth: true,
                     email: action.payload.email,
-                    childId: action.payload.childId
+                    childId: action.payload.childId,
                 },
                 error:{
                     message:'',
