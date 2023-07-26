@@ -44,11 +44,13 @@ export default function page({ params }) {
             const pictureSrc = `data:${picture.contentType};base64,${base64}`
             res = { ...res, picture: pictureSrc }
             dispatch({ type: 'FETCH_SUCCESS', payload: res })
-            reduxDispatch(action({ type: 'FETCH_SUCCESS', payload: res }))
             if (auth.value.childId === res.childId) setIsOwner(true)
         }).catch(err => {
             dispatch({ type: 'FETCH_ERROR' })
         })
+
+    }, []); // Add errorMessages to the dependency array
+    useEffect(() => {
         // Your previous first useEffect functionality
         if (errorMessages.length > 0) {
             const timer = setTimeout(() => {
@@ -59,8 +61,7 @@ export default function page({ params }) {
                 clearTimeout(timer); // this will clear the timeout if the component is unmounted before the time is up
             };
         }
-    }, [errorMessages]); // Add errorMessages to the dependency array
-
+    },[errorMessages])
     const handleCancel = () => {
         dispatch({ type: 'RESET', payload: user.user });
     };
@@ -110,7 +111,6 @@ export default function page({ params }) {
             const base64 = new Buffer.from(picture.data).toString('base64')
             const pictureSrc = `data:${picture.contentType};base64,${base64}`
             res = { ...res, picture: pictureSrc }
-            reduxDispatch(action({ type: 'UPDATE', payload: res }))
             setEdit(!isEdit)
             console.log("Update complete")
 

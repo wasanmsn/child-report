@@ -32,14 +32,14 @@ const initialState = {
 const reducer =  (state, action) => {
     switch (action.payload.type) {
         case 'FETCH_SUCCESS':
-            console.log(action.payload)
             return { ...state,isLoading: false, user: action.payload.payload };
         case 'FETCH_ERROR':
             return { ...state, isLoading: false };
         case 'UPDATE':
+            console.log(action.payload)
             return {...state,user:{...state.user,...action.payload.payload}}
         case 'RESET':
-            return { ...state, user: action.payload.payload };
+            return initialState;
         case 'COMPLETE':
             return {...state,progress:{...state.progress,[action.payload.field]:action.payload.payload}}
         default:

@@ -16,6 +16,7 @@ export const Toast = ({ messages }) => {
   return messages.map((msg, index) => (
     <div 
       id={`alert-${index}`} 
+      key={`alert-${index}`} 
       className={`flex items-center p-4 mb-4 border-t-4 ${getToastClasses(msg.isError)}`} 
       role="alert"
     >
