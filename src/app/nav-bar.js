@@ -57,13 +57,6 @@ export default function navBar() {
     <div className="login-title">
       {page.backUrl ? (
         <div className="px-8 flex gap-1">
-          <a
-            className="flex w-min hover:cursor-pointer hover:text-blue-500"
-            onClick={back}
-          >
-            <AiOutlineLeftCircle className="nav-icon" size={30} />
-            <span>กลับ</span>
-          </a>
           <Link
             className="flex hover:cursor-pointer w-min hover:text-blue-500"
             href={"/"}
